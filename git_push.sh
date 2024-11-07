@@ -12,4 +12,4 @@ else
 fi
 
 # Melakukan push ke branch saat ini
-git push
+git push origin master
