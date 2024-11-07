@@ -12,7 +12,7 @@ func main() {
 	app := fiber.New()
 
 	// Inisialisasi koneksi ke Oracle
-	config.InitDatabase()
+	config.InitializeDB()
 
 	// Mengatur routing
 	routes.SetupRoutes(app)
