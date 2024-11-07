@@ -27,12 +27,12 @@ func InitializeDB() {
 	var err error
 	DB, err = sql.Open("oracle", dsn)
 	if err != nil {
-		log.Fatalf("Gagal membuka koneksi: %v", err)
+		log.Fatalf("Gagal membuka koneksi: %v", dsn)
 	}
 
 	// Mengecek koneksi
 	if err = DB.Ping(); err != nil {
-		log.Fatalf("Gagal terhubung ke database: %v", err)
+		log.Fatalf("Gagal terhubung ke database: %v", dsn)
 	}
 
 	fmt.Println("Berhasil terhubung ke Oracle Database!")
