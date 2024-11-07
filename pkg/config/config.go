@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/sijms/go-ora/v2"
 )
@@ -14,7 +15,14 @@ var DB *sql.DB
 // InitializeDB menginisialisasi koneksi ke database Oracle
 func InitializeDB() {
 	// Gunakan format URL untuk koneksi go-ora
-	dsn := "oracle://system:yourpassword@localhost:1521/XEPDB1"
+	DB_USER := os.Getenv("DB_USER")
+	DB_PASSWORD := os.Getenv("DB_PASSWORD")
+	DB_HOST := os.Getenv("DB_HOST")
+	DB_PORT := os.Getenv("DB_PORT")
+	DB_SID := os.Getenv("DB_SID")
+	dsn := "oracle://" + DB_USER + ":" + DB_PASSWORD + "@" + DB_HOST + ":" + DB_PORT + "/" + DB_SID
+
+	// dsn := "oracle://system:yourpassword@localhost:1521/XEPDB1"
 
 	var err error
 	DB, err = sql.Open("oracle", dsn)

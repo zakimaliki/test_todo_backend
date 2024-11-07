@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Layanan untuk Oracle XE
+  oracle:
+    image: gvenzl/oracle-xe:latest
+    container_name: oracle-xe
+    ports:
+      - "1521:1521"   # Oracle listener port
+      - "5500:5500"   # Oracle Enterprise Manager (opsional)
+    environment:
+      - ORACLE_PWD=yourpassword    # Password untuk pengguna system
+      - ORACLE_SID=XEPDB1
+      - ORACLE_CHARACTERSET=AL32UTF8
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    restart: always
+
+  # Layanan untuk aplikasi Go
+  golang-ora:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: golang-ora
+    depends_on:
+      - oracle
+    environment:
+      - DB_USER=system
+      - DB_PASSWORD=yourpassword
+      - DB_HOST=localhost
+      - DB_PORT=1521
+      - DB_SID=XEPDB1
+    ports:
+      - "3000:3000"  # Aplikasi Go akan berjalan di port 3000
+    command: ["go", "run", "main.go"]
+    restart: on-failure
+
+volumes:
+  oracle-data:
+    driver: local
