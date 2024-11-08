@@ -26,9 +26,20 @@ type Task struct {
 
 // }
 
-func SelectALLTasks() ([]Task, error) {
-	items := []Task{}
-	result := config.DB.Find(&items)
+//	func SelectALLTasks() ([]Task, error) {
+//		items := []Task{}
+//		result := config.DB.Find(&items)
+//		return items, result.Error
+//	}
+func SelectALLTasks(sort, keyword string, limit, offset int) ([]Task, error) {
+	var items []Task
+	query := config.DB.Order(sort)
+
+	if keyword != "" {
+		query = query.Where("title LIKE ? OR description LIKE ?", keyword, keyword)
+	}
+
+	result := query.Limit(limit).Offset(offset).Find(&items)
 	return items, result.Error
 }
 
@@ -60,4 +71,10 @@ func DeleteTask(id int) error {
 	var item Task
 	result := config.DB.Delete(&item, "id = ?", id)
 	return result.Error
+}
+
+func CountData() int64 {
+	var result int64
+	config.DB.Table("tasks").Count(&result)
+	return result
 }

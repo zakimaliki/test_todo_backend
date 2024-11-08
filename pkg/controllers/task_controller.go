@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"math"
 	"strconv"
+	"strings"
 	"time"
 	"todo-api/pkg/models"
 
@@ -40,15 +42,53 @@ func CreateTask(c *fiber.Ctx) error {
 	})
 }
 
+// func GetAllTasks(c *fiber.Ctx) error {
+// 	tasks, err := models.SelectALLTasks()
+// 	if err != nil {
+// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch tasks"})
+// 	}
+// 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+// 		"message": "Successfully fetched tasks",
+// 		"tasks":   tasks,
+// 	})
+// }
+
 func GetAllTasks(c *fiber.Ctx) error {
-	tasks, err := models.SelectALLTasks()
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch tasks"})
+	pageOld := c.Query("page")
+	limitOld := c.Query("limit")
+	page, _ := strconv.Atoi(pageOld)
+	if page == 0 {
+		page = 1
 	}
+	limit, _ := strconv.Atoi(limitOld)
+	if limit == 0 {
+		limit = 5
+	}
+	offset := (page - 1) * limit
+	sort := c.Query("sorting")
+	if sort == "" {
+		sort = "ASC"
+	}
+	sortby := c.Query("orderBy")
+	if sortby == "" {
+		sortby = "title"
+	}
+	sort = sortby + " " + strings.ToLower(sort)
+	keyword := c.Query("search")
+	keyword = "%" + keyword + "%"
+	tasks, _ := models.SelectALLTasks(sort, keyword, limit, offset)
+	totalData := models.CountData()
+	totalPage := math.Ceil(float64(totalData) / float64(limit))
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Successfully fetched tasks",
-		"tasks":   tasks,
+		"Tasks": tasks,
+		"pagination": fiber.Map{
+			"current_page": page,
+			"total_pages":  int(totalPage),
+			"total_tasks":  totalData,
+		},
 	})
+
 }
 
 func GetTaskByID(c *fiber.Ctx) error {
