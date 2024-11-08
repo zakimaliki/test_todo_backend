@@ -95,7 +95,7 @@ func GetAllTasks(c *fiber.Ctx) error {
 	totalPage := math.Ceil(float64(totalData) / float64(limit))
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"tasks": tasks,
+		"Tasks": tasks,
 		"pagination": fiber.Map{
 			"current_page": page,
 			"total_pages":  int(totalPage),
