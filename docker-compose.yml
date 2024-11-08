@@ -9,8 +9,15 @@ services:
       - 1521:1521
     environment:
       ORACLE_PASSWORD: yourpassword
-      ORACLE_DATABASE: XEPDB8
+      ORACLE_DATABASE: XEPDB22
+    # command: >
+    #   sh -c "sleep 60 && sqlplus system/yourpassword@//localhost:1521/XEPDB13 @/query.sql"
   # Layanan untuk aplikasi Go
+  redis:
+      image: redis:latest
+      container_name: redis-new
+      ports:
+        - 6379:6379
   golang-ora:
     build:
       context: .
@@ -22,10 +29,11 @@ services:
       - DB_PASSWORD=yourpassword
       - DB_HOST=db
       - DB_PORT=1521
-      - DB_SID=XEPDB8
+      - DB_SID=XEPDB22
     depends_on:
       - db
     command: ["sh", "-c", "sleep 60 && go run main.go"] # Menggabungkan penundaan dengan perintah untuk menjalankan aplikasi Go
+
 volumes:
   oracle-data:
     driver: local

@@ -4,6 +4,7 @@ import (
 	"log"
 	"todo-api/pkg/config"
 	"todo-api/pkg/routes"
+	"todo-api/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -19,6 +20,7 @@ func main() {
 	config.InitRedis()
 	// Inisialisasi koneksi ke Oracle
 	config.InitializeDB()
+	utils.Migration()
 
 	// Mengatur routing
 	routes.SetupRoutes(app)
