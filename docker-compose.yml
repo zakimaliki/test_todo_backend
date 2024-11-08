@@ -10,9 +10,7 @@ services:
     environment:
       ORACLE_PASSWORD: yourpassword
       ORACLE_DATABASE: XEPDB1
-    # command: >
-    #   sh -c "sleep 60 && sqlplus system/yourpassword@//localhost:1521/XEPDB13 @/query.sql"
-  # Layanan untuk aplikasi Go
+
   redis:
       image: redis:latest
       container_name: redis-new
