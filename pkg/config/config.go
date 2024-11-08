@@ -2,46 +2,39 @@
 package config
 
 import (
-	"database/sql"
-	"fmt"
-	"log"
 	"os"
+	"strconv"
 
-	_ "github.com/sijms/go-ora/v2"
+	oracle "github.com/godoes/gorm-oracle"
+	"gorm.io/gorm"
 )
 
-var DB *sql.DB
+var DB *gorm.DB
 
-// InitializeDB menginisialisasi koneksi ke database Oracle
 func InitializeDB() {
-	// Gunakan format URL untuk koneksi go-ora
-	DB_USER := os.Getenv("DB_USER")
-	DB_PASSWORD := os.Getenv("DB_PASSWORD")
-	DB_HOST := os.Getenv("DB_HOST")
-	DB_PORT := os.Getenv("DB_PORT")
-	DB_SID := os.Getenv("DB_SID")
-	dsn := "oracle://" + DB_USER + ":" + DB_PASSWORD + "@" + DB_HOST + ":" + DB_PORT + "/" + DB_SID
-
-	// dsn := "oracle://system:yourpassword@localhost:1521/XEPDB1"
+	DB_PORT, _ := strconv.Atoi(os.Getenv("DB_PORT"))
+	dialector := oracle.New(oracle.Config{
+		DSN: oracle.BuildUrl(
+			os.Getenv("DB_HOST"),
+			DB_PORT,
+			os.Getenv("DB_SID"),
+			os.Getenv("DB_USER"),
+			os.Getenv("DB_PASSWORD"),
+			map[string]string{
+				"CONNECTION TIMEOUT": "90",
+			},
+		),
+	})
 
 	var err error
-	DB, err = sql.Open("oracle", dsn)
+	DB, err = gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Gagal membuka koneksi: %v", dsn)
+		panic("failed to connect to database: " + err.Error())
 	}
 
-	// Mengecek koneksi
-	if err = DB.Ping(); err != nil {
-		log.Fatalf("Gagal terhubung ke database: %v", dsn)
+	if sqlDB, err := DB.DB(); err == nil {
+		oracle.AddSessionParams(sqlDB, map[string]string{
+			"TIME_ZONE": "+08:00",
+		})
 	}
-
-	fmt.Println("Berhasil terhubung ke Oracle Database!")
-}
-
-// CloseDB menutup koneksi ke database
-func CloseDB() {
-	if err := DB.Close(); err != nil {
-		log.Fatalf("Gagal menutup koneksi database: %v", err)
-	}
-	fmt.Println("Koneksi ke Oracle Database ditutup.")
 }

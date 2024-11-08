@@ -1,85 +1,83 @@
 package controllers
 
 import (
-	"log"
-	"todo-api/pkg/config"
+	"strconv"
+	"time"
 	"todo-api/pkg/models"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func CreateTask(c *fiber.Ctx) error {
-	task := new(models.Task)
-	if err := c.BodyParser(task); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON"})
-	}
+	var Task models.Task
+	c.BodyParser(&Task)
 
-	query := `INSERT INTO tasks (title, description, status, due_date) VALUES (:1, :2, :3, :4) RETURNING id INTO :5`
-	_, err := config.DB.Exec(query, task.Title, task.Description, task.Status, task.DueDate, &task.ID)
+	dueDate, err := time.Parse("2006-01-02 15:04:05", Task.DueDate.Format("2006-01-02 15:04:05"))
 	if err != nil {
-		log.Println("Error inserting task:", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not create task"})
+		c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid due date format",
+		})
+		return err
+	}
+	Task.DueDate = dueDate
+
+	Task.CreatedAt = time.Now()
+	if err := models.PostTask(&Task); err != nil {
+		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create task",
+		})
+		return err
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Task created successfully", "task": task})
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "Product created successfully",
+	})
 }
 
 func GetAllTasks(c *fiber.Ctx) error {
-	rows, err := config.DB.Query("SELECT id, title, description, status, due_date, created_at, updated_at FROM tasks")
+	tasks, err := models.SelectALLTasks()
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not retrieve tasks"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch tasks"})
 	}
-	defer rows.Close()
-
-	var tasks []models.Task
-	for rows.Next() {
-		var task models.Task
-		err := rows.Scan(&task.ID, &task.Title, &task.Description, &task.Status, &task.DueDate, &task.CreatedAt, &task.UpdatedAt)
-		if err != nil {
-			log.Println("Error scanning task:", err)
-			continue
-		}
-		tasks = append(tasks, task)
-	}
-
-	return c.JSON(fiber.Map{"tasks": tasks})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Successfully fetched tasks",
+		"tasks":   tasks,
+	})
 }
 
 func GetTaskByID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	var task models.Task
-	query := "SELECT id, title, description, status, due_date, created_at, updated_at FROM tasks WHERE id = :1"
-	err := config.DB.QueryRow(query, id).Scan(&task.ID, &task.Title, &task.Description, &task.Status, &task.DueDate, &task.CreatedAt, &task.UpdatedAt)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Task not found"})
+	id, _ := strconv.Atoi(c.Params("id"))
+	task, _ := models.SelectTaskById(id)
+	if task == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "Task not found",
+		})
 	}
 
-	return c.JSON(task)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Task retrieved successfully",
+		"task":    task,
+	})
 }
 
 func UpdateTask(c *fiber.Ctx) error {
-	id := c.Params("id")
-	task := new(models.Task)
-	if err := c.BodyParser(task); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON"})
+	id, _ := strconv.Atoi(c.Params("id"))
+	var Task models.Task
+	if err := c.BodyParser(&Task); err != nil {
+		c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
 	}
-
-	query := `UPDATE tasks SET title = :1, description = :2, status = :3, due_date = :4 WHERE id = :5`
-	_, err := config.DB.Exec(query, task.Title, task.Description, task.Status, task.DueDate, id)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not update task"})
-	}
-
-	return c.JSON(fiber.Map{"message": "Task updated successfully"})
+	Task.CreatedAt = time.Now()
+	task := models.UpdateTask(id, &Task)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Task updated successfully", "task": task})
 }
 
 func DeleteTask(c *fiber.Ctx) error {
-	id := c.Params("id")
-	query := "DELETE FROM tasks WHERE id = :1"
-	_, err := config.DB.Exec(query, id)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not delete task"})
-	}
+	id, _ := strconv.Atoi(c.Params("id"))
+	models.DeleteTask(id)
 
-	return c.JSON(fiber.Map{"message": "Task deleted successfully"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Task Deleted successfully",
+	})
 }
