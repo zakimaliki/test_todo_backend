@@ -30,7 +30,13 @@ func CreateTask(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Product created successfully",
+		"message": "Task created successfully",
+		"task": fiber.Map{
+			"title":       Task.Title,
+			"description": Task.Description,
+			"status":      Task.Status,
+			"due_date":    Task.DueDate.Format("2006-01-02"),
+		},
 	})
 }
 
@@ -54,23 +60,29 @@ func GetTaskByID(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Task retrieved successfully",
-		"task":    task,
-	})
+	return c.Status(fiber.StatusOK).JSON(task)
 }
 
 func UpdateTask(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
 	var Task models.Task
-	if err := c.BodyParser(&Task); err != nil {
-		c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid request body",
-		})
-	}
+	c.BodyParser(&Task)
 	Task.CreatedAt = time.Now()
-	task := models.UpdateTask(id, &Task)
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Task updated successfully", "task": task})
+	if err := models.UpdateTask(id, &Task); err != nil {
+		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update task",
+		})
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Task updated successfully",
+		"task": fiber.Map{
+			"title":       Task.Title,
+			"description": Task.Description,
+			"status":      Task.Status,
+			"due_date":    Task.DueDate.Format("2006-01-02"),
+		},
+	})
 }
 
 func DeleteTask(c *fiber.Ctx) error {
@@ -78,6 +90,6 @@ func DeleteTask(c *fiber.Ctx) error {
 	models.DeleteTask(id)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Task Deleted successfully",
+		"message": "Task deleted successfully",
 	})
 }
