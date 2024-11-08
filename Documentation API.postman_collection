@@ -1,0 +1,295 @@
+{
+	"info": {
+		"_postman_id": "b8187a74-5b4d-44f2-abf1-dde1f039974a",
+		"name": "To-Do List API",
+		"description": "Koleksi ini berisi serangkaian endpoint API untuk mengelola tugas (to-do list) dengan fungsionalitas CRUD (Create, Read, Update, Delete). API ini dikembangkan menggunakan bahasa pemrograman Go, menggunakan Oracle sebagai database utama, dan Redis untuk caching. Setiap endpoint dilengkapi dengan validasi input dan penanganan error, serta dilindungi dengan autentikasi dan otorisasi menggunakan JWT. Log akan tercatat untuk setiap permintaan dan respons yang terjadi.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "9722437"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "Register",
+							"originalRequest": {
+								"method": "POST",
+								"header": []
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": []
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Todo List",
+			"item": [
+				{
+					"name": "Create Task",
+					"request": {
+						"method": "POST",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "Create Task",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"title\": \"Task Title\",\r\n    \"description\": \"Task Description\",\r\n    \"status\": \"pending|completed\",\r\n    \"due_date\": \"2024-11-07\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/tasks",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"tasks"
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\"message\": \"Task created successfully\",\n    \"task\": {\n        \"title\": \"Task Title\",\n        \"description\": \"Task Description\",\n        \"status\": \"pending|completed\",\n        \"due_date\": \"2024-11-07\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get All Tasks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:3000/tasks?search=&limit&page&status",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "3000",
+							"path": [
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "limit",
+									"value": null
+								},
+								{
+									"key": "page",
+									"value": null
+								},
+								{
+									"key": "status",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get All Tasks",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/tasks",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"tasks"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": null,
+											"description": "(optional): Filter tasks by status.",
+											"disabled": true
+										},
+										{
+											"key": "page",
+											"value": null,
+											"description": "(optional): Page number for pagination.",
+											"disabled": true
+										},
+										{
+											"key": "limit",
+											"value": null,
+											"description": "(optional): Number of tasks per page.\n",
+											"disabled": true
+										},
+										{
+											"key": "search",
+											"value": null,
+											"description": "(optional): Search term to filter tasks by title or description.",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"tasks\": [\n        {\n        \"id\": \"...\",\n        \"title\": \"Task Title\",\n        \"description\": \"Task Description\",\n        \"status\": \"pending|completed\",\n        \"due_date\": \"2024-11-07\"\n        }\n    ],\n        \"pagination\": {\n        \"current_page\": 1,\n        \"total_pages\": 10,\n        \"total_tasks\": 100\n    }\n}\n"
+						}
+					]
+				},
+				{
+					"name": "Get Task by ID",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "Get Task by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/tasks/:id",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"tasks",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"...\",\n    \"title\": \"Task Title\",\n    \"description\": \"Task Description\",\n    \"status\": \"pending|completed\",\n    \"due_date\": \"2024-11-07\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Task",
+					"request": {
+						"method": "PUT",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "Update Task",
+							"originalRequest": {
+								"method": "PUT",
+								"header": []
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Delete Task",
+					"request": {
+						"method": "DELETE",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "Delete Task",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": []
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		}
+	]
+}
