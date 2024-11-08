@@ -16,6 +16,7 @@ func main() {
 	}
 	app := fiber.New()
 
+	config.InitRedis()
 	// Inisialisasi koneksi ke Oracle
 	config.InitializeDB()
 

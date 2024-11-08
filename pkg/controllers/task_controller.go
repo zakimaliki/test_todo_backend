@@ -1,16 +1,21 @@
 package controllers
 
 import (
+	"context"
+	"encoding/json"
 	"math"
 	"strconv"
 	"strings"
 	"time"
+	"todo-api/pkg/config"
 	"todo-api/pkg/models"
+	"todo-api/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func CreateTask(c *fiber.Ctx) error {
+	ctx := context.Background()
 	var Task models.Task
 	c.BodyParser(&Task)
 
@@ -22,14 +27,19 @@ func CreateTask(c *fiber.Ctx) error {
 		return err
 	}
 	Task.DueDate = dueDate
-
 	Task.CreatedAt = time.Now()
+
+	// Simpan task ke database
 	if err := models.PostTask(&Task); err != nil {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create task",
 		})
 		return err
 	}
+
+	taskId := Task.ID
+	// Simpan task ke Redis sebagai cache
+	utils.CacheTask(ctx, taskId, &Task)
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Task created successfully",
@@ -41,17 +51,6 @@ func CreateTask(c *fiber.Ctx) error {
 		},
 	})
 }
-
-// func GetAllTasks(c *fiber.Ctx) error {
-// 	tasks, err := models.SelectALLTasks()
-// 	if err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch tasks"})
-// 	}
-// 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-// 		"message": "Successfully fetched tasks",
-// 		"tasks":   tasks,
-// 	})
-// }
 
 func GetAllTasks(c *fiber.Ctx) error {
 	pageOld := c.Query("page")
@@ -105,28 +104,51 @@ func GetAllTasks(c *fiber.Ctx) error {
 }
 
 func GetTaskByID(c *fiber.Ctx) error {
-	id, _ := strconv.Atoi(c.Params("id"))
-	task, _ := models.SelectTaskById(id)
+	ctx := context.Background()
+	id := c.Params("id")
+	cacheKey := "task:" + id
+
+	// Coba ambil dari cache Redis
+	cachedData, err := config.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var task *models.Task
+		json.Unmarshal([]byte(cachedData), &task)
+		return c.Status(fiber.StatusOK).JSON(task)
+	}
+
+	// Jika tidak ada di cache, ambil dari database
+	taskId, _ := strconv.Atoi(id)
+	task, _ := models.SelectTaskById(taskId)
 	if task == nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "Task not found",
 		})
 	}
 
+	// Cache data task di Redis
+	utils.CacheTask(ctx, taskId, task)
+
 	return c.Status(fiber.StatusOK).JSON(task)
 }
 
 func UpdateTask(c *fiber.Ctx) error {
+	ctx := context.Background()
 	id, _ := strconv.Atoi(c.Params("id"))
 	var Task models.Task
 	c.BodyParser(&Task)
 	Task.CreatedAt = time.Now()
+
+	// Update task di database
 	if err := models.UpdateTask(id, &Task); err != nil {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update task",
 		})
 		return err
 	}
+
+	// Update cache di Redis
+	utils.CacheTask(ctx, id, &Task)
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Task updated successfully",
 		"task": fiber.Map{
@@ -140,7 +162,12 @@ func UpdateTask(c *fiber.Ctx) error {
 
 func DeleteTask(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
+
+	// Hapus task dari database
 	models.DeleteTask(id)
+
+	// Hapus task dari Redis
+	utils.DeleteCacheTask(context.Background(), id)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Task deleted successfully",

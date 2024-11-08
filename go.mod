@@ -10,9 +10,12 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/cengsin/oracle v1.0.0 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
+	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/godoes/gorm-oracle v1.6.14 // indirect
 	github.com/godror/knownpb v0.1.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
