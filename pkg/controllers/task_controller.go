@@ -74,21 +74,34 @@ func GetAllTasks(c *fiber.Ctx) error {
 		sortby = "title"
 	}
 	sort = sortby + " " + strings.ToLower(sort)
+
+	// Ambil nilai keyword dan status dari query
 	keyword := c.Query("search")
-	keyword = "%" + keyword + "%"
-	tasks, _ := models.SelectALLTasks(sort, keyword, limit, offset)
-	totalData := models.CountData()
+	if keyword != "" {
+		keyword = "%" + keyword + "%"
+	} else {
+		keyword = "%%"
+	}
+
+	// Set nilai default status ke "pending" jika tidak ditentukan
+	status := c.Query("status")
+	if status == "" {
+		status = "pending"
+	}
+
+	// Ambil data tasks
+	tasks, _ := models.SelectALLTasks(sort, keyword, status, limit, offset)
+	totalData := models.CountData(keyword, status)
 	totalPage := math.Ceil(float64(totalData) / float64(limit))
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"Tasks": tasks,
+		"tasks": tasks,
 		"pagination": fiber.Map{
 			"current_page": page,
 			"total_pages":  int(totalPage),
 			"total_tasks":  totalData,
 		},
 	})
-
 }
 
 func GetTaskByID(c *fiber.Ctx) error {

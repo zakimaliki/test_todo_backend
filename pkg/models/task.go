@@ -31,16 +31,25 @@ type Task struct {
 //		result := config.DB.Find(&items)
 //		return items, result.Error
 //	}
-func SelectALLTasks(sort, keyword string, limit, offset int) ([]Task, error) {
-	var items []Task
-	query := config.DB.Order(sort)
+func SelectALLTasks(sort, keyword, status string, limit, offset int) ([]Task, error) {
+	var tasks []Task
+	query := config.DB
 
-	if keyword != "" {
+	// Kondisi untuk title atau description
+	if keyword != "%%" {
 		query = query.Where("title LIKE ? OR description LIKE ?", keyword, keyword)
 	}
 
-	result := query.Limit(limit).Offset(offset).Find(&items)
-	return items, result.Error
+	// Kondisi untuk status, default ke "pending" jika tidak diatur
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	err := query.Order(sort).
+		Limit(limit).
+		Offset(offset).
+		Find(&tasks).Error
+	return tasks, err
 }
 
 func SelectTaskById(id int) (*Task, error) {
@@ -73,8 +82,20 @@ func DeleteTask(id int) error {
 	return result.Error
 }
 
-func CountData() int64 {
-	var result int64
-	config.DB.Table("tasks").Count(&result)
-	return result
+func CountData(keyword, status string) int64 {
+	var count int64
+	query := config.DB.Model(&Task{})
+
+	// Kondisi untuk title atau description
+	if keyword != "%%" {
+		query = query.Where("title LIKE ? OR description LIKE ?", keyword, keyword)
+	}
+
+	// Kondisi untuk status, default ke "pending" jika tidak diatur
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	query.Count(&count)
+	return count
 }
